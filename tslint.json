@@ -1,0 +1,91 @@
+{
+	"extends": "tslint:recommended",
+	"linterOptions": {
+		"exclude": ["app/**/*.jsx"]
+	},
+	"rules": {
+		"variable-name": [
+			true,
+			"check-format",
+			"allow-leading-underscore",
+			"ban-keywords"
+		],
+		"class-name": true,
+		"object-literal-key-quotes": false,
+		"interface-name": false,
+		"arrow-parens": false,
+		"max-classes-per-file": false,
+		"max-line-length": false,
+		"no-return-await": true,
+		"no-consecutive-blank-lines": [true, 2],
+		"no-duplicate-switch-case": true,
+		"ordered-imports": false,
+		"member-access": false,
+		"only-arrow-functions": false,
+		"trailing-comma": [
+			true,
+			{
+				"singleline": "never"
+			}
+		],
+		"object-literal-sort-keys": false,
+		"no-console": false,
+		"curly": [true, "ignore-same-line"],
+		"triple-equals": true,
+		"switch-default": true,
+		"no-switch-case-fall-through": true,
+		"brace-style": [
+			2,
+			"1tbs",
+			{
+				"allowSingleLine": true
+			}
+		],
+		"camelcase": [
+			2,
+			{
+				"properties": "never"
+			}
+		],
+		"callable-types": false,
+		"consistent-this": [2, "_this"],
+		"indent": ["tabs"],
+		"linebreak-style": [true, "unix"],
+		"new-parens": true,
+		"no-mixed-spaces-and-tabs": [2, "smart-tabs"],
+		"one-var": [
+			2,
+			{
+				"initialized": "never"
+			}
+		],
+		"quote-props": [
+			2,
+			"as-needed",
+			{
+				"keywords": false,
+				"unnecessary": false
+			}
+		],
+		"quotemark": [
+			true,
+			"single",
+			"jsx-double",
+			{
+				"allowTemplateLiterals": true
+			}
+		],
+		"space-before-function-paren": false,
+		"no-restricted-globals": ["error", "event", "document"]
+	},
+	"env": {
+		"node": true,
+		"mocha": true,
+		"es6": true
+	},
+	"plugins": ["react"],
+	"parserOptions": {
+		"ecmaVersion": 2017,
+		"sourceType": "module"
+	}
+}

@@ -1,0 +1,16 @@
+{
+	"compilerOptions": {
+		"target": "es6",
+		"module": "commonjs",
+		"outDir": "dist",
+		"sourceMap": true,
+		"allowJs": true,
+		"experimentalDecorators": true,
+		"emitDecoratorMetadata": true,
+		"skipLibCheck": true,
+		"noUnusedLocals": false
+	},
+	"files": ["./node_modules/@types/node/index.d.ts"],
+	"include": ["./src"],
+	"exclude": ["./node_modules"]
+}
