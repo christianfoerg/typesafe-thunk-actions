@@ -19,9 +19,13 @@ const defaultSuffix: AsyncTypeSuffix = {
 export function asyncActionCreatorFactory<TState>(
 	initialOptions: RequestActionCreatorFactoryOptions<TState>
 ) {
-	return function createAsyncAction<TPayload>(
+	return function createAsyncAction<TPayload, TArg = void>(
 		type: string,
-		promise: () => Promise<TPayload>
+		promise: (
+			arg: TArg,
+			dispatch?: ThunkDispatch<TState, undefined, AnyAction>,
+			getState?: () => TState
+		) => Promise<TPayload>
 	) {
 		const { buildActionCreator } = initialOptions;
 		const suffix = initialOptions.suffix || defaultSuffix;
@@ -34,13 +38,13 @@ export function asyncActionCreatorFactory<TState>(
 			`${type}${suffix.fulfilled}`,
 			(payload: TPayload) => payload
 		);
-		const action = () => async (
+		const action = (a: TArg) => async (
 			disp: ThunkDispatch<TState, undefined, AnyAction>,
 			gs: () => TState
 		) => {
 			disp(pendingAction());
 			try {
-				const payload = await promise();
+				const payload = await promise(a, disp, gs);
 				return disp(fulfilledAction(payload));
 			} catch (err) {
 				disp(rejectedAction(err));

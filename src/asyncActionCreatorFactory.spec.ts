@@ -76,7 +76,7 @@ describe('asyncActionCreatorFactory', () => {
 			return 5;
 		};
 		const asyncActionCreator = buildAsyncActionCreator('increase', promiseFn);
-		const asyncAction = await dispatch(asyncActionCreator());
+		const asyncAction = await dispatch(asyncActionCreator(null));
 		expect(asyncAction).toEqual({
 			type: 'increase_fulfilled',
 			payload: 5
@@ -95,10 +95,31 @@ describe('asyncActionCreatorFactory', () => {
 			throw error;
 		};
 		const asyncActionCreator = buildAsyncActionCreator('throw', promiseFn);
-		await dispatch(asyncActionCreator());
+		await dispatch(asyncActionCreator(null));
 		expect(mockStore.getActions()).toEqual([
 			{ type: asyncActionCreator.pending.toString() },
 			{ type: asyncActionCreator.rejected.toString(), payload: error }
+		]);
+	});
+	test('should dispatch another action via thunk', async () => {
+		const buildAsyncActionCreator = asyncActionCreatorFactory<State>({
+			buildActionCreator
+		});
+		const actionCreator = buildActionCreator('add', (a: number) => a);
+		const asyncActionCreator = buildAsyncActionCreator(
+			'get_amount',
+			async (a: number, d, g) => {
+				const { amount } = g();
+				dispatch(actionCreator(amount));
+				await wait(500);
+				return a;
+			}
+		);
+		await dispatch(asyncActionCreator(5));
+		expect(mockStore.getActions()).toEqual([
+			{ type: asyncActionCreator.pending.toString() },
+			{ type: actionCreator.toString(), payload: 0 },
+			{ type: asyncActionCreator.fulfilled.toString(), payload: 5 }
 		]);
 	});
 });

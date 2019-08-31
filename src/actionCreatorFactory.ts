@@ -4,6 +4,7 @@ import {
 	ActionCreator,
 	ActionCreatorBuilder
 } from './types';
+import { action } from './action';
 
 export function actionCreatorFactory<TState>(): ActionCreatorBuilder<TState> {
 	const types: string[] = [];
@@ -18,7 +19,7 @@ export function actionCreatorFactory<TState>(): ActionCreatorBuilder<TState> {
 			d?: ThunkDispatch<TState, undefined, AnyAction>,
 			g?: () => TState
 		) => TPayload
-	): ActionCreator<TType, TArg, TState, TPayload> => {
+	) => {
 		if (types.indexOf(type) !== -1) {
 			throw new Error(
 				`Cannot create action creator with duplicate type "${type}"`
@@ -29,11 +30,13 @@ export function actionCreatorFactory<TState>(): ActionCreatorBuilder<TState> {
 			d: ThunkDispatch<TState, undefined, AnyAction>,
 			g: () => TState
 		) => {
-			const action = {
-				type,
-				payload: payloadHandler ? payloadHandler(a, d, g) : undefined
-			};
-			return d(action);
+			return d(
+				action(
+					type,
+					payloadHandler ? payloadHandler(a, d, g) : undefined,
+					undefined
+				)
+			);
 		};
 		Object.assign(actionCreator, { toString: () => type });
 		return actionCreator;

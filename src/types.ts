@@ -1,5 +1,15 @@
 import { AnyAction, Reducer } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
+import { ThunkDispatch, ThunkAction } from 'redux-thunk';
+
+export type TypeConstant = string;
+
+interface SuperAction<TType extends string, TPayload, TMeta, TState>
+	extends ThunkAction<
+		PayloadMetaAction<TType, TPayload, TMeta>,
+		TState,
+		undefined,
+		AnyAction
+	> {}
 
 export interface PayloadHandler<TState, TArg, TPayload> {
 	(
@@ -21,7 +31,7 @@ export type ActionCreator<TType extends string, TArg, TState, TPayload> = (
 ) => (
 	d: ThunkDispatch<TState, undefined, AnyAction>,
 	g: () => TState
-) => AnyAction;
+) => PayloadMetaAction<TType, TPayload, undefined>;
 
 export type ActionPayload<
 	TActionCreator
