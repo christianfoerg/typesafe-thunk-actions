@@ -1,21 +1,15 @@
 import { createReducer } from './createReducer';
 import { actionCreatorFactory } from './actionCreatorFactory';
-import {
-	combineReducers,
-	applyMiddleware,
-	createStore,
-	AnyAction
-} from 'redux';
-import thunk, { ThunkDispatch } from 'redux-thunk';
+import { combineReducers } from 'redux';
+import thunk from 'redux-thunk';
 import mockStoreFactory, { MockStoreEnhanced } from 'redux-mock-store';
 import { ActionCreatorBuilder } from './types';
+import { buildStore } from './utils/testing';
 
 interface State {
 	amount: number;
 	text: string;
 }
-
-type CustomDispatch = ThunkDispatch<State, undefined, AnyAction>;
 
 describe('createReducer', () => {
 	const makeMockStore = mockStoreFactory<State>([thunk]);
@@ -68,10 +62,7 @@ describe('createReducer', () => {
 				}
 			}
 		});
-		const createStoreWithMiddleware = applyMiddleware<CustomDispatch>(thunk)(
-			createStore
-		);
-		const store = createStoreWithMiddleware<State>(rootReducer);
+		const store = buildStore(rootReducer);
 		store.dispatch(add(1));
 		expect(store.getState()).toEqual({
 			amount: 1,

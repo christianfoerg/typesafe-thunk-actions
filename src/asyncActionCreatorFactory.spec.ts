@@ -3,7 +3,7 @@ import { actionCreatorFactory } from './actionCreatorFactory';
 import thunk, { ThunkDispatch } from 'redux-thunk';
 import mockStoreFactory, { MockStoreEnhanced } from 'redux-mock-store';
 import { ActionCreatorBuilder, AnyAction } from './types';
-import { wait } from './utils';
+import { wait } from './utils/testing';
 
 interface State {
 	amount: number;
