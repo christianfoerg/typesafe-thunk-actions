@@ -47,13 +47,6 @@ export function action<T extends TypeConstant, P>(
 
 export function action<T extends TypeConstant>(type: T): { type: T };
 
-/**
- * @description flux standard action factory
- * @example
- * ```
- * const add = (amount: number, meta?: Meta, error?: boolean) => action('INCREMENT', amount, meta, error);
- * ```
- */
 export function action<
 	T extends TypeConstant,
 	P = undefined,

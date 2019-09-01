@@ -3,14 +3,6 @@ import { ThunkDispatch, ThunkAction } from 'redux-thunk';
 
 export type TypeConstant = string;
 
-interface SuperAction<TType extends string, TPayload, TMeta, TState>
-	extends ThunkAction<
-		PayloadMetaAction<TType, TPayload, TMeta>,
-		TState,
-		undefined,
-		AnyAction
-	> {}
-
 export interface PayloadHandler<TState, TArg, TPayload> {
 	(
 		arg?: TArg,

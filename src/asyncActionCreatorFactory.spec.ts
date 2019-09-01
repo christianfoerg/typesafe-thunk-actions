@@ -3,7 +3,7 @@ import { actionCreatorFactory } from './actionCreatorFactory';
 import thunk, { ThunkDispatch } from 'redux-thunk';
 import mockStoreFactory, { MockStoreEnhanced } from 'redux-mock-store';
 import { ActionCreatorBuilder, AnyAction } from './types';
-import { wait } from './utils/testing';
+import { wait, sagaMiddleware } from './utils/testing';
 
 interface State {
 	amount: number;
@@ -11,7 +11,7 @@ interface State {
 }
 
 describe('asyncActionCreatorFactory', () => {
-	const makeMockStore = mockStoreFactory<State>([thunk]);
+	const makeMockStore = mockStoreFactory<State>([thunk, sagaMiddleware]);
 	let mockStore: MockStoreEnhanced<State>;
 	let dispatch: ThunkDispatch<State, undefined, AnyAction>;
 	let getState: () => State;
@@ -24,7 +24,9 @@ describe('asyncActionCreatorFactory', () => {
 	});
 	test('should throw error when trying to stringify async action creator', async done => {
 		const buildAsyncActionCreator = asyncActionCreatorFactory<State>({
-			buildActionCreator
+			buildActionCreator,
+			sagaMiddleware,
+			store: mockStore
 		});
 		const asyncActionCreator = buildAsyncActionCreator(
 			'async_number',
@@ -45,6 +47,8 @@ describe('asyncActionCreatorFactory', () => {
 	test('should contain pending, rejected and fulfilled action creators', () => {
 		const buildAsyncActionCreator = asyncActionCreatorFactory<State>({
 			buildActionCreator,
+			sagaMiddleware,
+			store: mockStore,
 			suffix: {
 				pending: '.PENDING',
 				rejected: '.REJECTED',
@@ -57,53 +61,60 @@ describe('asyncActionCreatorFactory', () => {
 		expect(asyncActionCreator.pending).toBeDefined();
 		expect(asyncActionCreator.rejected).toBeDefined();
 		expect(asyncActionCreator.fulfilled).toBeDefined();
-		expect(dispatch(asyncActionCreator.pending())).toEqual({
-			type: 'async_fn.PENDING'
+		expect(dispatch(asyncActionCreator.pending(null))).toEqual({
+			type: 'async_fn.PENDING',
+			payload: null
 		});
-		expect(dispatch(asyncActionCreator.rejected())).toEqual({
-			type: 'async_fn.REJECTED'
+		expect(dispatch(asyncActionCreator.rejected(new Error()))).toEqual({
+			type: 'async_fn.REJECTED',
+			payload: new Error()
 		});
-		expect(dispatch(asyncActionCreator.fulfilled())).toEqual({
-			type: 'async_fn.FULFILLED'
+		expect(dispatch(asyncActionCreator.fulfilled(null))).toEqual({
+			type: 'async_fn.FULFILLED',
+			payload: null
 		});
 	});
 	test('should dispatch pending and fulfilled actions', async () => {
 		const buildAsyncActionCreator = asyncActionCreatorFactory<State>({
-			buildActionCreator
+			buildActionCreator,
+			sagaMiddleware,
+			store: mockStore
 		});
 		const promiseFn = async () => {
 			wait(3);
 			return 5;
 		};
 		const asyncActionCreator = buildAsyncActionCreator('increase', promiseFn);
-		const asyncAction = await dispatch(asyncActionCreator(null));
-		expect(asyncAction).toEqual({
-			type: 'increase_fulfilled',
-			payload: 5
-		});
+		dispatch(asyncActionCreator(null));
+		await wait(500);
 		expect(mockStore.getActions()).toEqual([
-			{ type: asyncActionCreator.pending.toString() },
+			{ type: asyncActionCreator.pending.toString(), payload: null },
 			{ type: asyncActionCreator.fulfilled.toString(), payload: 5 }
 		]);
 	});
 	test('should dispatch pending and rejected actions', async () => {
 		const buildAsyncActionCreator = asyncActionCreatorFactory<State>({
-			buildActionCreator
+			buildActionCreator,
+			sagaMiddleware,
+			store: mockStore
 		});
 		const error = new Error('Always throwing');
 		const promiseFn = async () => {
 			throw error;
 		};
 		const asyncActionCreator = buildAsyncActionCreator('throw', promiseFn);
-		await dispatch(asyncActionCreator(null));
+		dispatch(asyncActionCreator(null));
+		await wait(500);
 		expect(mockStore.getActions()).toEqual([
-			{ type: asyncActionCreator.pending.toString() },
+			{ type: asyncActionCreator.pending.toString(), payload: null },
 			{ type: asyncActionCreator.rejected.toString(), payload: error }
 		]);
 	});
 	test('should dispatch another action via thunk', async () => {
 		const buildAsyncActionCreator = asyncActionCreatorFactory<State>({
-			buildActionCreator
+			buildActionCreator,
+			sagaMiddleware,
+			store: mockStore
 		});
 		const actionCreator = buildActionCreator('add', (a: number) => a);
 		const asyncActionCreator = buildAsyncActionCreator(
@@ -115,11 +126,70 @@ describe('asyncActionCreatorFactory', () => {
 				return a;
 			}
 		);
-		await dispatch(asyncActionCreator(5));
+		dispatch(asyncActionCreator(5));
+		await wait(1000);
 		expect(mockStore.getActions()).toEqual([
-			{ type: asyncActionCreator.pending.toString() },
+			{ type: asyncActionCreator.pending.toString(), payload: 5 },
 			{ type: actionCreator.toString(), payload: 0 },
 			{ type: asyncActionCreator.fulfilled.toString(), payload: 5 }
+		]);
+	});
+	test('should only dispatch last fulfilled async action when debounced', async () => {
+		const buildAsyncActionCreator = asyncActionCreatorFactory<State>({
+			buildActionCreator,
+			sagaMiddleware,
+			store: mockStore
+		});
+		const asyncActionCreator = buildAsyncActionCreator(
+			'wait',
+			async (a: number) => {
+				await wait(250);
+				return a;
+			},
+			{ recipe: 'debounce', ms: 250 }
+		);
+		dispatch(asyncActionCreator(50));
+		await wait(50);
+		dispatch(asyncActionCreator(100));
+		await wait(150);
+		dispatch(asyncActionCreator(200));
+		await wait(1000);
+		expect(mockStore.getActions()).toEqual([
+			{ type: asyncActionCreator.pending.toString(), payload: 50 },
+			{ type: asyncActionCreator.pending.toString(), payload: 100 },
+			{ type: asyncActionCreator.pending.toString(), payload: 200 },
+			{ type: asyncActionCreator.fulfilled.toString(), payload: 200 }
+		]);
+	});
+	test('should not dispatch each fulfilled async action when throttled', async () => {
+		const buildAsyncActionCreator = asyncActionCreatorFactory<State>({
+			buildActionCreator,
+			sagaMiddleware,
+			store: mockStore
+		});
+		const asyncActionCreator = buildAsyncActionCreator(
+			'wait',
+			async (a: string) => {
+				await wait(250);
+				return a;
+			},
+			{ recipe: 'throttle', ms: 250 }
+		);
+		dispatch(asyncActionCreator('a'));
+		await wait(50);
+		dispatch(asyncActionCreator('b'));
+		await wait(50);
+		dispatch(asyncActionCreator('c'));
+		await wait(50);
+		dispatch(asyncActionCreator('d'));
+		await wait(500);
+		expect(mockStore.getActions()).toEqual([
+			{ type: asyncActionCreator.pending.toString(), payload: 'a' },
+			{ type: asyncActionCreator.pending.toString(), payload: 'b' },
+			{ type: asyncActionCreator.pending.toString(), payload: 'c' },
+			{ type: asyncActionCreator.pending.toString(), payload: 'd' },
+			{ type: asyncActionCreator.fulfilled.toString(), payload: 'a' },
+			{ type: asyncActionCreator.fulfilled.toString(), payload: 'd' }
 		]);
 	});
 });
