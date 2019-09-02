@@ -1,7 +1,6 @@
 import { createReducer } from './createReducer';
 import { actionCreatorFactory } from './actionCreatorFactory';
 import { combineReducers } from 'redux';
-import thunk from 'redux-thunk';
 import mockStoreFactory, { MockStoreEnhanced } from 'redux-mock-store';
 import { ActionCreatorBuilder } from './types';
 import { buildStore } from './utils/testing';
@@ -12,12 +11,15 @@ interface State {
 }
 
 describe('createReducer', () => {
-	const makeMockStore = mockStoreFactory<State>([thunk]);
+	const makeMockStore = mockStoreFactory<State>();
 	let mockStore: MockStoreEnhanced<State>;
 	let buildActionCreator: ActionCreatorBuilder<State>;
 	beforeEach(() => {
 		mockStore = makeMockStore({ amount: 0, text: '' });
-		buildActionCreator = actionCreatorFactory<State>();
+		buildActionCreator = actionCreatorFactory<State>({
+			types: [],
+			store: mockStore
+		});
 	});
 	it('should return the initial state', () => {
 		const reducer = createReducer(0);
@@ -30,16 +32,9 @@ describe('createReducer', () => {
 		const reducer = createReducer(2)
 			.handleAction(add, (state, action) => state + action.payload)
 			.handleAction(subtract, (state, action) => state - action.payload);
-		const dispatch = mockStore.dispatch;
-		const getState = mockStore.getState;
-		expect(reducer(2, add(3)(dispatch, getState))).toEqual(5);
-		expect(reducer(2, subtract(3)(dispatch, getState))).toEqual(-1);
-		expect(reducer(2, multiply(3)(dispatch, getState))).toEqual(2);
-		expect(mockStore.getActions()).toEqual([
-			{ type: String(add), payload: 3 },
-			{ type: String(subtract), payload: 3 },
-			{ type: String(multiply), payload: 3 }
-		]);
+		expect(reducer(2, add(3))).toEqual(5);
+		expect(reducer(2, subtract(3))).toEqual(-1);
+		expect(reducer(2, multiply(3))).toEqual(2);
 	});
 	it('should work with real store', () => {
 		const add = buildActionCreator('add', (a: number) => a);

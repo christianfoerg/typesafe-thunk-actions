@@ -1,9 +1,4 @@
-import {
-	AnyAction,
-	ThunkDispatch,
-	ActionCreatorBuilder,
-	TypeConstant
-} from './types';
+import { AnyAction, ActionCreatorBuilder, TypeConstant } from './types';
 import { SagaMiddleware } from 'redux-saga';
 import {
 	put,
@@ -12,7 +7,7 @@ import {
 	takeEvery,
 	throttle
 } from 'redux-saga/effects';
-import { Store } from 'redux';
+import { Store, Dispatch } from 'redux';
 
 interface RequestActionCreatorFactoryOptions<TState> {
 	buildActionCreator: ActionCreatorBuilder<TState>;
@@ -44,14 +39,13 @@ export function asyncActionCreatorFactory<TState>(
 		type: string,
 		promiseHandler: (
 			arg: TArg,
-			dispatch?: ThunkDispatch<TState, undefined, AnyAction>,
+			dispatch?: Dispatch,
 			getState?: () => TState
 		) => Promise<TPayload>,
 		options?: AsyncActionRecipe
 	) {
 		const { buildActionCreator, sagaMiddleware, store } = initialOptions;
-		const dispatch: ThunkDispatch<TState, undefined, AnyAction> =
-			store.dispatch;
+		const dispatch = store.dispatch;
 		const suffix = initialOptions.suffix || defaultSuffix;
 		const pendingType = `${type}${suffix.pending}`;
 		const rejectedType = `${type}${suffix.rejected}`;

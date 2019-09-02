@@ -1,9 +1,9 @@
 import { asyncActionCreatorFactory } from './asyncActionCreatorFactory';
 import { actionCreatorFactory } from './actionCreatorFactory';
-import thunk, { ThunkDispatch } from 'redux-thunk';
 import mockStoreFactory, { MockStoreEnhanced } from 'redux-mock-store';
-import { ActionCreatorBuilder, AnyAction } from './types';
+import { ActionCreatorBuilder } from './types';
 import { wait, sagaMiddleware } from './utils/testing';
+import { Dispatch } from 'redux';
 
 interface State {
 	amount: number;
@@ -11,16 +11,19 @@ interface State {
 }
 
 describe('asyncActionCreatorFactory', () => {
-	const makeMockStore = mockStoreFactory<State>([thunk, sagaMiddleware]);
+	const makeMockStore = mockStoreFactory<State>([sagaMiddleware]);
 	let mockStore: MockStoreEnhanced<State>;
-	let dispatch: ThunkDispatch<State, undefined, AnyAction>;
+	let dispatch: Dispatch;
 	let getState: () => State;
 	let buildActionCreator: ActionCreatorBuilder<State>;
 	beforeEach(() => {
 		mockStore = makeMockStore({ amount: 0, text: '' });
 		dispatch = mockStore.dispatch;
 		getState = mockStore.getState;
-		buildActionCreator = actionCreatorFactory<State>();
+		buildActionCreator = actionCreatorFactory<State>({
+			types: [],
+			store: mockStore
+		});
 	});
 	test('should throw error when trying to stringify async action creator', async done => {
 		const buildAsyncActionCreator = asyncActionCreatorFactory<State>({

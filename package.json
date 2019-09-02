@@ -12,15 +12,13 @@
 	},
 	"dependencies": {
 		"redux": "^4.0.4",
-		"redux-saga": "^1.0.5",
-		"redux-thunk": "^2.3.0"
+		"redux-saga": "^1.0.5"
 	},
 	"devDependencies": {
 		"@types/jest": "^24.0.18",
 		"@types/node": "10.5.2",
 		"@types/redux": "^3.6.0",
 		"@types/redux-mock-store": "^1.0.1",
-		"@types/redux-thunk": "^2.1.0",
 		"eslint": "5.2.0",
 		"jest": "^24.9.0",
 		"redux-mock-store": "^1.5.3",
