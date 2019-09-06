@@ -33,7 +33,18 @@ export function createReducer<TState>(
 		};
 		return createReducer(initialState, allHandlers);
 	}
+	function handleAnyAction(type: string, reducer: Reducer<TState, AnyAction>) {
+		if (initialHandlers.hasOwnProperty(type)) {
+			throw new Error(`Cannot handle type "${type}" more than once`);
+		}
+		const allHandlers = {
+			...initialHandlers,
+			[type]: reducer
+		};
+		return createReducer(initialState, allHandlers);
+	}
 	return Object.assign(rootReducer, {
-		handleAction
+		handleAction,
+		handleAnyAction
 	});
 }
