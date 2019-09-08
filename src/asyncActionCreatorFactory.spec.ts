@@ -89,7 +89,7 @@ describe('asyncActionCreatorFactory', () => {
 		};
 		const asyncActionCreator = buildAsyncActionCreator('increase', promiseFn);
 		dispatch(asyncActionCreator(null));
-		await wait(500);
+		await wait(50);
 		expect(mockStore.getActions()).toEqual([
 			{ type: asyncActionCreator.pending.toString(), payload: null },
 			{ type: asyncActionCreator.fulfilled.toString(), payload: 5 }
@@ -107,7 +107,7 @@ describe('asyncActionCreatorFactory', () => {
 		};
 		const asyncActionCreator = buildAsyncActionCreator('throw', promiseFn);
 		dispatch(asyncActionCreator(null));
-		await wait(500);
+		await wait(50);
 		expect(mockStore.getActions()).toEqual([
 			{ type: asyncActionCreator.pending.toString(), payload: null },
 			{ type: asyncActionCreator.rejected.toString(), payload: error }
@@ -125,12 +125,12 @@ describe('asyncActionCreatorFactory', () => {
 			async (a: number, d, g) => {
 				const { amount } = g();
 				dispatch(actionCreator(amount));
-				await wait(500);
+				await wait(50);
 				return a;
 			}
 		);
 		dispatch(asyncActionCreator(5));
-		await wait(1000);
+		await wait(100);
 		expect(mockStore.getActions()).toEqual([
 			{ type: asyncActionCreator.pending.toString(), payload: 5 },
 			{ type: actionCreator.toString(), payload: 0 },
@@ -146,17 +146,17 @@ describe('asyncActionCreatorFactory', () => {
 		const asyncActionCreator = buildAsyncActionCreator(
 			'wait',
 			async (a: number) => {
-				await wait(250);
+				await wait(25);
 				return a;
 			},
-			{ recipe: 'debounce', ms: 250 }
+			{ recipe: 'debounce', ms: 25 }
 		);
 		dispatch(asyncActionCreator(50));
-		await wait(50);
+		await wait(5);
 		dispatch(asyncActionCreator(100));
-		await wait(150);
+		await wait(15);
 		dispatch(asyncActionCreator(200));
-		await wait(1000);
+		await wait(100);
 		expect(mockStore.getActions()).toEqual([
 			{ type: asyncActionCreator.pending.toString(), payload: 50 },
 			{ type: asyncActionCreator.pending.toString(), payload: 100 },
