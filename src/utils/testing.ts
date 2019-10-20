@@ -1,7 +1,5 @@
 import { applyMiddleware, createStore, AnyAction, Reducer } from 'redux';
-import createSagaMiddleware from 'redux-saga';
-
-export const sagaMiddleware = createSagaMiddleware();
+import thunk from 'redux-thunk';
 
 export async function wait(ms: number) {
 	return new Promise<void>(resolve => {
@@ -10,8 +8,6 @@ export async function wait(ms: number) {
 }
 
 export function buildStore<TState>(rootReducer: Reducer<TState, AnyAction>) {
-	const createStoreWithMiddleware = applyMiddleware(sagaMiddleware)(
-		createStore
-	);
+	const createStoreWithMiddleware = applyMiddleware(thunk)(createStore);
 	return createStoreWithMiddleware<TState>(rootReducer);
 }

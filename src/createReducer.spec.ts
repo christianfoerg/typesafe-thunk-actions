@@ -1,9 +1,8 @@
-import { createReducer } from './createReducer';
-import { actionCreatorFactory } from './actionCreatorFactory';
 import { combineReducers } from 'redux';
+import { createReducer } from './createReducer';
 import mockStoreFactory, { MockStoreEnhanced } from 'redux-mock-store';
-import { ActionCreatorBuilder } from './types';
 import { buildStore } from './utils/testing';
+import { createStandardAction } from 'typesafe-actions';
 
 interface State {
 	amount: number;
@@ -13,22 +12,17 @@ interface State {
 describe('createReducer', () => {
 	const makeMockStore = mockStoreFactory<State>();
 	let mockStore: MockStoreEnhanced<State>;
-	let buildActionCreator: ActionCreatorBuilder<State>;
 	beforeEach(() => {
 		mockStore = makeMockStore({ amount: 0, text: '' });
-		buildActionCreator = actionCreatorFactory<State>({
-			types: [],
-			store: mockStore
-		});
 	});
 	it('should return the initial state', () => {
 		const reducer = createReducer(0);
 		expect(reducer(0, { type: 'any' })).toEqual(0);
 	});
 	it('should handle registered actions', () => {
-		const add = buildActionCreator('add', (a: number) => a);
-		const subtract = buildActionCreator('subtract', (a: number) => a);
-		const multiply = buildActionCreator('multiply', (a: number) => a);
+		const add = createStandardAction('add')<number>();
+		const subtract = createStandardAction('subtract')<number>();
+		const multiply = createStandardAction('multiply')<number>();
 		const reducer = createReducer(2)
 			.handleAction(add, (state, action) => state + action.payload)
 			.handleAction(subtract, (state, action) => state - action.payload)
@@ -39,7 +33,7 @@ describe('createReducer', () => {
 		expect(reducer(3, { type: 'divide', payload: 2 })).toEqual(1.5);
 	});
 	it('should work with real store', () => {
-		const add = buildActionCreator('add', (a: number) => a);
+		const add = createStandardAction('add')<number>();
 		const write = (text: string) => ({
 			type: 'write',
 			payload: text
@@ -77,8 +71,8 @@ describe('createReducer', () => {
 		});
 	});
 	it('should throw an error when trying to re-register an action creator', done => {
-		const add = buildActionCreator('add', (a: number) => a);
-		const subtract = buildActionCreator('subtract', (a: number) => a);
+		const add = createStandardAction('add')<number>();
+		const subtract = createStandardAction('subtract')<number>();
 		try {
 			createReducer(0)
 				.handleAction(add, (state, action) => state + action.payload)
@@ -93,8 +87,8 @@ describe('createReducer', () => {
 		}
 	});
 	it('should throw an error when trying to re-register a type', done => {
-		const add = buildActionCreator('add', (a: number) => a);
-		const subtract = buildActionCreator('subtract', (a: number) => a);
+		const add = createStandardAction('add')<number>();
+		const subtract = createStandardAction('subtract')<number>();
 		try {
 			createReducer(0)
 				.handleAction(add, (state, action) => state + action.payload)

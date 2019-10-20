@@ -11,6 +11,6 @@
 		"noUnusedLocals": false
 	},
 	"files": ["./node_modules/@types/node/index.d.ts"],
-	"include": ["./src"],
-	"exclude": ["./node_modules"]
+	"include": ["./src/index.ts"],
+	"exclude": ["./node_modules", "./**/*.spec.ts", "./src/testing.ts"]
 }

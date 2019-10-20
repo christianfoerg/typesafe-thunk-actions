@@ -1,4 +1,23 @@
-import { AnyAction, Reducer, Dispatch } from 'redux';
+export interface GetState<TState> {
+	(): TState;
+}
+
+export interface Action<T = any> {
+	type: T;
+}
+
+export interface AnyAction extends Action {
+	[extraProps: string]: any;
+}
+
+export type Reducer<TState, TAction extends Action> = (
+	state: TState | undefined,
+	action: TAction
+) => TState;
+
+export interface Dispatch<A extends Action = AnyAction> {
+	<T extends A>(action: T): T;
+}
 
 export type TypeConstant = string;
 
@@ -15,7 +34,7 @@ export interface ActionCreatorBuilder<TState> {
 
 export type ActionCreator<TType extends string, TArg, TState, TPayload> = (
 	a?: TArg
-) => PayloadMetaAction<TType, TPayload, undefined>;
+) => StandardAction<TType, TPayload>;
 
 export type ActionPayload<
 	TActionCreator
@@ -34,13 +53,10 @@ export type GetAction<TActionCreator> = TActionCreator extends ActionCreator<
 	infer TState,
 	infer TPayload
 >
-	? { type: TType; payload: TPayload }
+	? StandardAction<TType, TPayload>
 	: never;
 
-export { Reducer, AnyAction };
-
-export interface PayloadMetaAction<TType extends string, TPayload, TMeta> {
+export interface StandardAction<TType extends string, TPayload> {
 	type: TType;
 	payload: TPayload;
-	meta: TMeta;
 }
