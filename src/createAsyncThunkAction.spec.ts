@@ -11,7 +11,7 @@ interface State {
 	text: string;
 }
 
-describe('asyncActionCreatorFactory', () => {
+describe('createAsyncThunkAction', () => {
 	const makeMockStore = mockStoreFactory<State>([thunk]);
 	let mockStore: MockStoreEnhanced<State>;
 	let dispatch: ThunkDispatch<State, undefined, AnyAction>;
@@ -101,6 +101,41 @@ describe('asyncActionCreatorFactory', () => {
 			{ type: asyncActionCreator.request.toString() },
 			{ type: actionCreator.toString(), payload: 0 },
 			{ type: asyncActionCreator.success.toString(), payload: 5 }
+		]);
+	});
+	test('should include meta in actions if metaHandler was specified', async () => {
+		const asyncActionCreator = createAsyncThunkAction(
+			'get_test',
+			async (a: number) => {
+				await wait(200);
+				return a * a;
+			},
+			(a: number, _, g: () => State) => `${g().amount}_${a}`
+		);
+		dispatch(asyncActionCreator(5));
+		await wait(400);
+		expect(mockStore.getActions()).toEqual([
+			{ type: asyncActionCreator.request.toString(), meta: '0_5' },
+			{ type: asyncActionCreator.success.toString(), payload: 25, meta: '0_5' }
+		]);
+	});
+	test('should include meta in failure action if metaHandler was specified', async () => {
+		const asyncActionCreator = createAsyncThunkAction(
+			'get_test',
+			async (a: number) => {
+				throw new Error();
+			},
+			(a: number, _, g: () => State) => `${g().amount}_${a}`
+		);
+		dispatch(asyncActionCreator(5));
+		await wait(400);
+		expect(mockStore.getActions()).toEqual([
+			{ type: asyncActionCreator.request.toString(), meta: '0_5' },
+			{
+				type: asyncActionCreator.failure.toString(),
+				payload: new Error(),
+				meta: '0_5'
+			}
 		]);
 	});
 });

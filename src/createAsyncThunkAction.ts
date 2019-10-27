@@ -4,44 +4,56 @@ import {
 	EmptyAC,
 	PayloadAC,
 	createAction,
-	createStandardAction
+	createStandardAction,
+	PayloadMetaAC,
+	MetaAction,
+	PayloadMetaAction
 } from 'typesafe-actions';
+import { ActionBuilderConstructor } from 'typesafe-actions/dist/type-helpers';
 
 export function createAsyncThunkAction<
 	T extends string,
 	TPayload,
+	TMeta = undefined,
 	TState = any,
 	TArg = undefined
 >(
 	type: T,
-	createHandler: (
+	payloadHandler: (
 		arg: TArg,
 		dispatch: ThunkDispatch<TState, undefined, AnyAction>,
 		getState: () => TState
-	) => Promise<TPayload>
-): StandardAsyncActionReturnType<TArg, TState> & ApiActions<TPayload> {
-	const apiActions = {
-		request: createAction(`${type}.request`),
-		success: createStandardAction(`${type}.success`)<TPayload>(),
-		failure: createStandardAction(`${type}.failure`)<Error>()
+	) => Promise<TPayload>,
+	metaHandler?: (
+		arg: TArg,
+		dispatch: ThunkDispatch<TState, undefined, AnyAction>,
+		getState: () => TState
+	) => TMeta
+): StandardAsyncActionReturnType<TArg, TState> &
+	AsyncActionCreators<TPayload, TMeta> {
+	const asyncActionCreators: AsyncActionCreators<TPayload, TMeta> = {
+		request: createStandardAction(`${type}.request`)<undefined, TMeta>(),
+		success: createStandardAction(`${type}.success`)<TPayload, TMeta>(),
+		failure: createStandardAction(`${type}.failure`)<Error, TMeta>()
 	};
 	const promiseHandler = (arg: TArg) => async (
 		dispatch: ThunkDispatch<TState, undefined, AnyAction>,
 		getState: () => TState
 	) => {
-		dispatch(apiActions.request());
+		const meta = metaHandler ? metaHandler(arg, dispatch, getState) : undefined;
+		dispatch(asyncActionCreators.request(undefined, meta));
 		try {
-			const payload = await createHandler(arg, dispatch, getState);
-			dispatch(apiActions.success(payload));
+			const payload = await payloadHandler(arg, dispatch, getState);
+			dispatch(asyncActionCreators.success(payload, meta));
 		} catch (err) {
-			dispatch(apiActions.failure(err));
+			dispatch(asyncActionCreators.failure(err, meta));
 		}
 	};
 	const func = promiseHandler as StandardAsyncActionReturnType<TArg, TState>;
 	return Object.assign(func, {
-		request: apiActions.request,
-		success: apiActions.success,
-		failure: apiActions.failure,
+		request: asyncActionCreators.request,
+		success: asyncActionCreators.success,
+		failure: asyncActionCreators.failure,
 		toString: () => {
 			throw new Error(
 				'Forbidden to stringify an async action creator. Use the subordinate action creators instead.'
@@ -62,12 +74,8 @@ type StandardAsyncActionReturnType<TArg, TState> = TArg extends undefined
 			getState: () => TState
 	  ) => Promise<void>;
 
-interface ApiActions<TPayload> {
-	request: EmptyAC<string>;
-	success: [TPayload] extends [undefined]
-		? unknown extends TPayload
-			? PayloadAC<string, TPayload>
-			: EmptyAC<string>
-		: PayloadAC<string, TPayload>;
-	failure: PayloadAC<string, Error>;
+interface AsyncActionCreators<TPayload, TMeta> {
+	request: ActionBuilderConstructor<string, undefined, TMeta>;
+	success: ActionBuilderConstructor<string, TPayload, TMeta>;
+	failure: ActionBuilderConstructor<string, Error, TMeta>;
 }
