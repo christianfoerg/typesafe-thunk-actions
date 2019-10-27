@@ -1,4 +1,5 @@
-import { Dispatch } from 'redux';
+import { AnyAction } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
 import {
 	EmptyAC,
 	PayloadAC,
@@ -13,13 +14,11 @@ export function createAsyncThunkAction<
 	TArg = undefined
 >(
 	type: T,
-	createHandler: TArg extends undefined
-		? (() => Promise<TPayload>)
-		: ((
-				arg: TArg,
-				dispatch: Dispatch,
-				getState: () => TState
-		  ) => Promise<TPayload>)
+	createHandler: (
+		arg: TArg,
+		dispatch: ThunkDispatch<TState, undefined, AnyAction>,
+		getState: () => TState
+	) => Promise<TPayload>
 ): StandardAsyncActionReturnType<TArg, TState> & ApiActions<TPayload> {
 	const apiActions = {
 		request: createAction(`${type}.request`),
@@ -27,7 +26,7 @@ export function createAsyncThunkAction<
 		failure: createStandardAction(`${type}.failure`)<Error>()
 	};
 	const promiseHandler = (arg: TArg) => async (
-		dispatch: Dispatch,
+		dispatch: ThunkDispatch<TState, undefined, AnyAction>,
 		getState: () => TState
 	) => {
 		dispatch(apiActions.request());
@@ -52,10 +51,16 @@ export function createAsyncThunkAction<
 }
 
 type StandardAsyncActionReturnType<TArg, TState> = TArg extends undefined
-	? () => (dispatch: Dispatch, getState: () => TState) => Promise<void>
+	? () => (
+			dispatch: ThunkDispatch<TState, undefined, AnyAction>,
+			getState: () => TState
+	  ) => Promise<void>
 	: (
 			arg: TArg
-	  ) => (dispatch: Dispatch, getState: () => TState) => Promise<void>;
+	  ) => (
+			dispatch: ThunkDispatch<TState, undefined, AnyAction>,
+			getState: () => TState
+	  ) => Promise<void>;
 
 interface ApiActions<TPayload> {
 	request: EmptyAC<string>;
